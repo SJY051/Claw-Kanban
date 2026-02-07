@@ -52,13 +52,13 @@
 **macOS / Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/GreenSheep01201/claw-kanban/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/GreenSheep01201/Claw-Kanban/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-irm https://raw.githubusercontent.com/GreenSheep01201/claw-kanban/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/GreenSheep01201/Claw-Kanban/main/install.ps1 | iex
 ```
 
 설치 스크립트가 repo 클론, 의존성 설치, UI 빌드, `.env` 및 `AGENTS.md` 설정, 자동 시작 서비스 등록(macOS: launchd, Linux: systemd)을 모두 수행합니다.
@@ -66,8 +66,8 @@ irm https://raw.githubusercontent.com/GreenSheep01201/claw-kanban/main/install.p
 ### 수동 설치
 
 ```bash
-git clone https://github.com/GreenSheep01201/claw-kanban.git
-cd claw-kanban
+git clone https://github.com/GreenSheep01201/Claw-Kanban.git
+cd Claw-Kanban
 pnpm install
 pnpm build
 ```
@@ -194,7 +194,7 @@ OPENCLAW_CONFIG=~/.openclaw/openclaw.json
 ## 아키텍처
 
 ```
-claw-kanban/
+Claw-Kanban/
 ├── server/
 │   └── index.ts            # Express 5 API 서버
 │                            #   - SQLite 저장소 (node:sqlite)

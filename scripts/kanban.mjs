@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * claw-kanban management script
+ * Claw-Kanban management script
  *
  * Usage:
  *   node scripts/kanban.mjs start   - Start the kanban server (detached)
@@ -76,8 +76,8 @@ async function start() {
   const pid = readPid();
   if (pid && isProcessAlive(pid)) {
     const port = getPort();
-    console.log(`[claw-kanban] Already running (PID: ${pid})`);
-    console.log(`[claw-kanban] Dashboard: http://127.0.0.1:${port}`);
+    console.log(`[Claw-Kanban] Already running (PID: ${pid})`);
+    console.log(`[Claw-Kanban] Dashboard: http://127.0.0.1:${port}`);
     return;
   }
 
@@ -125,24 +125,24 @@ async function start() {
   }
 
   if (healthy) {
-    console.log(`[claw-kanban] Server started (PID: ${child.pid})`);
-    console.log(`[claw-kanban] Dashboard: http://127.0.0.1:${port}`);
-    console.log(`[claw-kanban] Log file:  ${LOG_FILE}`);
+    console.log(`[Claw-Kanban] Server started (PID: ${child.pid})`);
+    console.log(`[Claw-Kanban] Dashboard: http://127.0.0.1:${port}`);
+    console.log(`[Claw-Kanban] Log file:  ${LOG_FILE}`);
   } else {
-    console.log(`[claw-kanban] Server spawned (PID: ${child.pid}) but health check did not pass.`);
-    console.log(`[claw-kanban] Check the log: ${LOG_FILE}`);
+    console.log(`[Claw-Kanban] Server spawned (PID: ${child.pid}) but health check did not pass.`);
+    console.log(`[Claw-Kanban] Check the log: ${LOG_FILE}`);
   }
 }
 
 function stop() {
   const pid = readPid();
   if (!pid) {
-    console.log("[claw-kanban] No PID file found. Server may not be running.");
+    console.log("[Claw-Kanban] No PID file found. Server may not be running.");
     return false;
   }
 
   if (!isProcessAlive(pid)) {
-    console.log(`[claw-kanban] Process ${pid} not running (stale PID file). Cleaning up.`);
+    console.log(`[Claw-Kanban] Process ${pid} not running (stale PID file). Cleaning up.`);
     try { fs.unlinkSync(PID_FILE); } catch { /* ignore */ }
     return false;
   }
@@ -154,12 +154,12 @@ function stop() {
     }
     process.kill(pid, "SIGTERM");
   } catch (err) {
-    console.error(`[claw-kanban] Failed to stop process ${pid}: ${err.message}`);
+    console.error(`[Claw-Kanban] Failed to stop process ${pid}: ${err.message}`);
     return false;
   }
 
   try { fs.unlinkSync(PID_FILE); } catch { /* ignore */ }
-  console.log(`[claw-kanban] Server stopped (PID: ${pid})`);
+  console.log(`[Claw-Kanban] Server stopped (PID: ${pid})`);
   return true;
 }
 
@@ -168,25 +168,25 @@ function status() {
   const port = getPort();
 
   if (!pid) {
-    console.log("[claw-kanban] Server is not running (no PID file).");
+    console.log("[Claw-Kanban] Server is not running (no PID file).");
     return;
   }
 
   if (isProcessAlive(pid)) {
-    console.log(`[claw-kanban] Server is running`);
+    console.log(`[Claw-Kanban] Server is running`);
     console.log(`  PID:       ${pid}`);
     console.log(`  Dashboard: http://127.0.0.1:${port}`);
     console.log(`  API:       http://127.0.0.1:${port}/api/health`);
     console.log(`  Log:       ${LOG_FILE}`);
     console.log(`  Data:      ${path.join(ROOT, "kanban.sqlite")}`);
   } else {
-    console.log(`[claw-kanban] Server is not running (stale PID: ${pid}). Cleaning up.`);
+    console.log(`[Claw-Kanban] Server is not running (stale PID: ${pid}). Cleaning up.`);
     try { fs.unlinkSync(PID_FILE); } catch { /* ignore */ }
   }
 }
 
 async function restart() {
-  console.log("[claw-kanban] Restarting...");
+  console.log("[Claw-Kanban] Restarting...");
   stop();
   // Brief delay to let port release
   await new Promise((r) => setTimeout(r, 500));
@@ -206,7 +206,7 @@ function removeAutoStartService() {
           execSync(`launchctl bootout gui/$(id -u)/${label}`, { stdio: "ignore" });
         } catch { /* ignore */ }
         fs.unlinkSync(plist);
-        console.log(`[claw-kanban] Removed launchd service: ${label}`);
+        console.log(`[Claw-Kanban] Removed launchd service: ${label}`);
       }
     }
   } else if (process.platform === "linux") {
@@ -219,7 +219,7 @@ function removeAutoStartService() {
       } catch { /* ignore */ }
       fs.unlinkSync(serviceFile);
       try { execSync("systemctl --user daemon-reload", { stdio: "ignore" }); } catch { /* ignore */ }
-      console.log("[claw-kanban] Removed systemd service: claw-kanban");
+      console.log("[Claw-Kanban] Removed systemd service: claw-kanban");
     }
   }
 }
@@ -245,7 +245,7 @@ function resolveWorkspaceDir() {
 }
 
 function uninstall() {
-  console.log("[claw-kanban] Uninstalling...");
+  console.log("[Claw-Kanban] Uninstalling...");
 
   // Stop server
   stop();
@@ -282,14 +282,14 @@ function uninstall() {
       const result = (before + after).replace(/^\n+/, "");
       fs.writeFileSync(agentsPath, result, "utf8");
     }
-    console.log(`[claw-kanban] Removed kanban rules from ${agentsPath}`);
+    console.log(`[Claw-Kanban] Removed kanban rules from ${agentsPath}`);
   }
 
   console.log("");
-  console.log("[claw-kanban] To fully remove claw-kanban:");
+  console.log("[Claw-Kanban] To fully remove Claw-Kanban:");
   console.log(`  rm -rf ${ROOT}`);
   console.log("");
-  console.log("[claw-kanban] Your kanban data (kanban.sqlite, logs/) is preserved until you delete the directory.");
+  console.log("[Claw-Kanban] Your kanban data (kanban.sqlite, logs/) is preserved until you delete the directory.");
 }
 
 const commands = { start, stop, status, restart, uninstall };

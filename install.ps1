@@ -1,8 +1,8 @@
 # ─────────────────────────────────────────────────────────────
-# claw-kanban one-click installer (Windows PowerShell)
+# Claw-Kanban one-click installer (Windows PowerShell)
 #
 # Usage:
-#   irm https://raw.githubusercontent.com/GreenSheep01201/claw-kanban/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/GreenSheep01201/Claw-Kanban/main/install.ps1 | iex
 #
 # Environment variables:
 #   CLAW_KANBAN_DIR  - Custom install path
@@ -10,15 +10,15 @@
 
 $ErrorActionPreference = "Stop"
 
-$Repo = "https://github.com/GreenSheep01201/claw-kanban.git"
+$Repo = "https://github.com/GreenSheep01201/Claw-Kanban.git"
 $DefaultDir = Join-Path $env:USERPROFILE ".openclaw\workspace\kanban-dashboard"
 $InstallDir = if ($env:CLAW_KANBAN_DIR) { $env:CLAW_KANBAN_DIR } else { $DefaultDir }
 $Port = if ($env:CLAW_KANBAN_PORT) { $env:CLAW_KANBAN_PORT } else { "8787" }
 
-function Write-Info  { param($Msg) Write-Host "[claw-kanban] $Msg" -ForegroundColor Cyan }
-function Write-Ok    { param($Msg) Write-Host "[claw-kanban] $Msg" -ForegroundColor Green }
-function Write-Warn  { param($Msg) Write-Host "[claw-kanban] $Msg" -ForegroundColor Yellow }
-function Write-Fail  { param($Msg) Write-Host "[claw-kanban] $Msg" -ForegroundColor Red; exit 1 }
+function Write-Info  { param($Msg) Write-Host "[Claw-Kanban] $Msg" -ForegroundColor Cyan }
+function Write-Ok    { param($Msg) Write-Host "[Claw-Kanban] $Msg" -ForegroundColor Green }
+function Write-Warn  { param($Msg) Write-Host "[Claw-Kanban] $Msg" -ForegroundColor Yellow }
+function Write-Fail  { param($Msg) Write-Host "[Claw-Kanban] $Msg" -ForegroundColor Red; exit 1 }
 
 # ─── Prerequisites ──────────────────────────────────────────
 
@@ -84,7 +84,7 @@ if (Test-Path (Join-Path $InstallDir ".git")) {
         Write-Warn "git pull failed, continuing with existing code"
     }
 } else {
-    Write-Info "Cloning claw-kanban to $InstallDir..."
+    Write-Info "Cloning Claw-Kanban to $InstallDir..."
     $parent = Split-Path -Parent $InstallDir
     if (-not (Test-Path $parent)) {
         New-Item -ItemType Directory -Path $parent -Force | Out-Null
@@ -160,7 +160,7 @@ node scripts/kanban.mjs start
 
 Write-Host ""
 Write-Host "=================================================" -ForegroundColor Green
-Write-Host "    claw-kanban installed successfully!" -ForegroundColor Green
+Write-Host "    Claw-Kanban installed successfully!" -ForegroundColor Green
 Write-Host "=================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Dashboard:  http://127.0.0.1:$Port" -ForegroundColor White

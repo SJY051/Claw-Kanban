@@ -102,8 +102,8 @@ function spawnAgent(
 
   // Handle spawn errors (e.g. ENOENT when binary not found) without crashing server
   child.on("error", (err) => {
-    console.error(`[claw-kanban] spawn error for ${agent} (card ${cardId}): ${err.message}`);
-    logStream.write(`\n[claw-kanban] SPAWN ERROR: ${err.message}\n`);
+    console.error(`[Claw-Kanban] spawn error for ${agent} (card ${cardId}): ${err.message}`);
+    logStream.write(`\n[Claw-Kanban] SPAWN ERROR: ${err.message}\n`);
     logStream.end();
     activeProcesses.delete(key);
     appendCardLog(cardId, "error", `Agent spawn failed: ${err.message}`);
@@ -215,7 +215,7 @@ function loadGatewayConfig(): { url: string; token?: string } | null {
     };
     const port = Number(parsed?.gateway?.port);
     if (!Number.isFinite(port) || port <= 0) {
-      console.warn(`[claw-kanban] invalid gateway.port in ${OPENCLAW_CONFIG_PATH}`);
+      console.warn(`[Claw-Kanban] invalid gateway.port in ${OPENCLAW_CONFIG_PATH}`);
       return null;
     }
     const token =
@@ -224,7 +224,7 @@ function loadGatewayConfig(): { url: string; token?: string } | null {
     cachedGateway = { url, token, loadedAt: now };
     return { url, token };
   } catch (err) {
-    console.warn(`[claw-kanban] failed to read gateway config: ${String(err)}`);
+    console.warn(`[Claw-Kanban] failed to read gateway config: ${String(err)}`);
     return null;
   }
 }
@@ -293,8 +293,8 @@ async function sendGatewayWake(text: string): Promise<void> {
       maxProtocol: GATEWAY_PROTOCOL_VERSION,
       client: {
         id: "cli",
-        displayName: "claw-kanban",
-        version: "claw-kanban",
+        displayName: "Claw-Kanban",
+        version: "Claw-Kanban",
         platform: process.platform,
         mode: "backend",
         instanceId,
@@ -356,7 +356,7 @@ function queueWake(params: { key: string; text: string; debounceMs?: number }) {
   const debounceMs = params.debounceMs ?? WAKE_DEBOUNCE_DEFAULT_MS;
   if (!shouldSendWake(params.key, debounceMs)) return;
   void sendGatewayWake(params.text).catch((err) => {
-    console.warn(`[claw-kanban] wake failed (${params.key}): ${String(err)}`);
+    console.warn(`[Claw-Kanban] wake failed (${params.key}): ${String(err)}`);
   });
 }
 
@@ -1352,15 +1352,15 @@ if (isProduction) {
 }
 
 app.listen(PORT, HOST, () => {
-  console.log(`[claw-kanban] listening on http://${HOST}:${PORT} (db: ${dbPath})`);
+  console.log(`[Claw-Kanban] listening on http://${HOST}:${PORT} (db: ${dbPath})`);
   if (isProduction) {
-    console.log(`[claw-kanban] mode: production (serving UI from ${distDir})`);
+    console.log(`[Claw-Kanban] mode: production (serving UI from ${distDir})`);
   } else {
-    console.log(`[claw-kanban] mode: development (UI served by Vite on separate port)`);
+    console.log(`[Claw-Kanban] mode: development (UI served by Vite on separate port)`);
   }
   if (OPENCLAW_CONFIG_PATH) {
-    console.log(`[claw-kanban] OpenClaw gateway integration: enabled (${OPENCLAW_CONFIG_PATH})`);
+    console.log(`[Claw-Kanban] OpenClaw gateway integration: enabled (${OPENCLAW_CONFIG_PATH})`);
   } else {
-    console.log(`[claw-kanban] OpenClaw gateway integration: disabled (set OPENCLAW_CONFIG to enable)`);
+    console.log(`[Claw-Kanban] OpenClaw gateway integration: disabled (set OPENCLAW_CONFIG to enable)`);
   }
 });

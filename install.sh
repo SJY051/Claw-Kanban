@@ -2,16 +2,16 @@
 set -euo pipefail
 
 # ─────────────────────────────────────────────────────────────
-# claw-kanban one-click installer (macOS / Linux)
+# Claw-Kanban one-click installer (macOS / Linux)
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/GreenSheep01201/claw-kanban/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/GreenSheep01201/Claw-Kanban/main/install.sh | bash
 #
 # Environment variables:
 #   CLAW_KANBAN_DIR  - Custom install path (default: auto-detect from openclaw workspace)
 # ─────────────────────────────────────────────────────────────
 
-REPO="https://github.com/GreenSheep01201/claw-kanban.git"
+REPO="https://github.com/GreenSheep01201/Claw-Kanban.git"
 PORT="${CLAW_KANBAN_PORT:-8787}"
 LAUNCHD_LABEL="ai.openclaw.kanban"
 LAUNCHD_LEGACY_LABEL="com.openclaw.kanban"
@@ -24,10 +24,10 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-info()  { echo -e "${CYAN}[claw-kanban]${NC} $1"; }
-ok()    { echo -e "${GREEN}[claw-kanban]${NC} $1"; }
-warn()  { echo -e "${YELLOW}[claw-kanban]${NC} $1"; }
-fail()  { echo -e "${RED}[claw-kanban]${NC} $1"; exit 1; }
+info()  { echo -e "${CYAN}[Claw-Kanban]${NC} $1"; }
+ok()    { echo -e "${GREEN}[Claw-Kanban]${NC} $1"; }
+warn()  { echo -e "${YELLOW}[Claw-Kanban]${NC} $1"; }
+fail()  { echo -e "${RED}[Claw-Kanban]${NC} $1"; exit 1; }
 
 # ─── Detect openclaw workspace path ─────────────────────────
 # Resolution order:
@@ -129,7 +129,7 @@ if [ -d "$INSTALL_DIR/.git" ]; then
   cd "$INSTALL_DIR"
   git pull --rebase origin main || warn "git pull failed, continuing with existing code"
 else
-  info "Cloning claw-kanban to $INSTALL_DIR..."
+  info "Cloning Claw-Kanban to $INSTALL_DIR..."
   mkdir -p "$(dirname "$INSTALL_DIR")"
   git clone "$REPO" "$INSTALL_DIR"
   cd "$INSTALL_DIR"
@@ -356,7 +356,7 @@ register_systemd() {
 
   cat > "$service_file" <<UNIT
 [Unit]
-Description=claw-kanban AI Agent Orchestration Kanban Board
+Description=Claw-Kanban AI Agent Orchestration Kanban Board
 After=network.target
 
 [Service]
@@ -415,11 +415,11 @@ done
 echo ""
 if [ "$HEALTHY" = true ]; then
   echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${GREEN}${BOLD}║         claw-kanban installed successfully!      ║${NC}"
+  echo -e "${GREEN}${BOLD}║         Claw-Kanban installed successfully!      ║${NC}"
   echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════╝${NC}"
 else
   echo -e "${YELLOW}${BOLD}╔══════════════════════════════════════════════════╗${NC}"
-  echo -e "${YELLOW}${BOLD}║  claw-kanban installed (server not yet healthy)  ║${NC}"
+  echo -e "${YELLOW}${BOLD}║  Claw-Kanban installed (server not yet healthy)  ║${NC}"
   echo -e "${YELLOW}${BOLD}╚══════════════════════════════════════════════════╝${NC}"
   echo -e "  Check logs: ${INSTALL_DIR}/logs/kanban.err.log"
 fi

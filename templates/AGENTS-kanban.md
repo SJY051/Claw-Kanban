@@ -1,7 +1,7 @@
 <!-- BEGIN claw-kanban orchestration rules -->
 # Claw-Kanban Orchestration Rules
 
-> This section was added by claw-kanban setup.
+> This section was added by Claw-Kanban setup.
 > It defines how the AI agent should handle kanban task orchestration.
 > Place this at the TOP of your AGENTS.md so it takes priority.
 

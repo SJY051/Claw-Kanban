@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * claw-kanban setup script
+ * Claw-Kanban setup script
  *
  * Prepends kanban orchestration rules to the user's AGENTS.md.
  * This is an UPDATE, not an OVERWRITE - existing content is preserved.
@@ -78,8 +78,8 @@ function main() {
   const agentsPath = findAgentsPath();
   const templateContent = fs.readFileSync(TEMPLATE_PATH, "utf8");
 
-  console.log(`[claw-kanban] Setting up kanban orchestration rules`);
-  console.log(`[claw-kanban] Target: ${agentsPath}`);
+  console.log(`[Claw-Kanban] Setting up kanban orchestration rules`);
+  console.log(`[Claw-Kanban] Target: ${agentsPath}`);
 
   // Read existing content
   let existingContent = "";
@@ -89,8 +89,8 @@ function main() {
 
   // Check if already installed
   if (existingContent.includes(END_MARKER)) {
-    console.log(`[claw-kanban] Kanban rules already present in ${agentsPath}`);
-    console.log(`[claw-kanban] To update, remove the section between "${START_MARKER}" and "${END_MARKER}" first.`);
+    console.log(`[Claw-Kanban] Kanban rules already present in ${agentsPath}`);
+    console.log(`[Claw-Kanban] To update, remove the section between "${START_MARKER}" and "${END_MARKER}" first.`);
     return;
   }
 
@@ -102,9 +102,9 @@ function main() {
   fs.mkdirSync(dir, { recursive: true });
 
   fs.writeFileSync(agentsPath, newContent, "utf8");
-  console.log(`[claw-kanban] Kanban orchestration rules added to top of ${agentsPath}`);
-  console.log(`[claw-kanban] Your existing AGENTS.md content is preserved below the kanban rules.`);
-  console.log(`[claw-kanban] Done!`);
+  console.log(`[Claw-Kanban] Kanban orchestration rules added to top of ${agentsPath}`);
+  console.log(`[Claw-Kanban] Your existing AGENTS.md content is preserved below the kanban rules.`);
+  console.log(`[Claw-Kanban] Done!`);
 }
 
 main();

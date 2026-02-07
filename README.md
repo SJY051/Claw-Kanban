@@ -52,13 +52,13 @@
 **macOS / Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/GreenSheep01201/claw-kanban/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/GreenSheep01201/Claw-Kanban/main/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-irm https://raw.githubusercontent.com/GreenSheep01201/claw-kanban/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/GreenSheep01201/Claw-Kanban/main/install.ps1 | iex
 ```
 
 The installer clones the repo, installs dependencies, builds the UI, configures `.env` and `AGENTS.md`, and registers an auto-start service (launchd on macOS, systemd on Linux).
@@ -66,8 +66,8 @@ The installer clones the repo, installs dependencies, builds the UI, configures 
 ### Manual Install
 
 ```bash
-git clone https://github.com/GreenSheep01201/claw-kanban.git
-cd claw-kanban
+git clone https://github.com/GreenSheep01201/Claw-Kanban.git
+cd Claw-Kanban
 pnpm install
 pnpm build
 ```
@@ -194,7 +194,7 @@ Wake notifications fire on:
 ## Architecture
 
 ```
-claw-kanban/
+Claw-Kanban/
 ├── server/
 │   └── index.ts            # Express 5 API server
 │                            #   - SQLite storage (node:sqlite)
