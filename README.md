@@ -444,9 +444,9 @@ Claw-Kanban is a **local development tool**. Important notes:
 
 | Platform | Status | Notes |
 |----------|--------|-------|
-| macOS | Fully supported | Primary dev platform. launchd auto-start. |
+| macOS | Fully tested | Primary dev platform. 100% working. launchd auto-start. |
 | Linux | Fully supported | systemd user service auto-start. |
-| Windows | Supported | PowerShell installer. Uses `taskkill /T /F` for process management. |
+| Windows | In progress | PowerShell installer available. Full compatibility coming soon. |
 
 ## Management
 
