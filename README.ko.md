@@ -118,6 +118,14 @@ pnpm dev:local  # localhost만 (127.0.0.1)
 
 ---
 
+## 왜 만들었나?
+
+AI 코딩 에이전트(Claude Code, Codex CLI, Gemini CLI)를 여러 개 쓰면 터미널 창을 3개 열어놓고 번갈아가면서 써야 하고, 태스크마다 어떤 에이전트를 쓸지 수동으로 결정하고, 끝날 때까지 하염없이 기다려야 합니다. Claw-Kanban은 이 문제를 해결합니다:
+
+- **역할별 에이전트 자동 배정** — 터미널 창 여러 개 열고 번갈아 쓸 필요 없음
+- **에이전트 작업 실시간 확인** — 끝날 때까지 기다릴 필요 없이 지금 뭐 하고 있는지 바로 확인
+- **폰으로 태스크 던지기** — Telegram에서 `# 버그 수정해줘` 보내면 에이전트가 알아서 처리
+
 ## 주요 기능
 
 - **6단계 칸반 보드** — Inbox, Planned, In Progress, Review/Test, Done, Stopped
@@ -125,8 +133,8 @@ pnpm dev:local  # localhost만 (127.0.0.1)
 - **역할 기반 자동 배정** — 역할(DevOps / Backend / Frontend)과 태스크 유형(New / Modify / Bugfix)에 따라 자동으로 에이전트 라우팅
 - **AI 프로바이더 감지** — Settings에서 각 CLI 도구의 설치/인증 상태를 표시하고, 미인증 프로바이더는 드롭다운에서 비활성화
 - **자동 리뷰** — 구현 완료 후 Claude가 자동으로 리뷰/테스트 수행
-- **실시간 터미널 뷰어** — Claude / Codex / Gemini 출력을 파싱하는 Stream-JSON 로그 뷰어
-- **웹훅 수집** — `POST /api/inbox`로 Telegram, Slack 등 외부 소스에서 카드 생성
+- **실시간 터미널 뷰어** — 에이전트가 뭘 하고 있는지 브라우저에서 실시간 확인, 더 이상 하염없이 기다릴 필요 없음
+- **채팅으로 카드 생성** — Telegram, Slack 등에서 `# 태스크 설명` 형식으로 보내면 칸반 카드가 즉시 생성
 - **OpenClaw 게이트웨이 연동** — 카드 상태 변경 시 웨이크 알림 (선택사항)
 - **모던 다크 UI** — React 19, 반응형 디자인, 글래스모피즘
 - **SQLite 저장소** — Node.js 내장 `node:sqlite`로 설정 없이 파일 기반 DB 사용
@@ -156,7 +164,7 @@ pnpm dev:local  # localhost만 (127.0.0.1)
   <img src="sample_img/claude_code_tm.png" width="800" alt="터미널 뷰어" />
 </p>
 
-> 실행 중인 AI 에이전트의 출력을 실시간으로 스트리밍. 하단 자동 스크롤, 팔로우 모드, 전체 로그 이력 확인 가능.
+> 에이전트가 지금 뭘 하고 있는지 실시간으로 확인. 일을 시키고 끝날 때까지 하염없이 기다릴 필요 없이, 터미널을 직접 까볼 수 있습니다.
 
 ### Telegram 연동
 
@@ -164,7 +172,7 @@ pnpm dev:local  # localhost만 (127.0.0.1)
   <img src="sample_img/telegram.png" width="400" alt="Telegram 연동" />
 </p>
 
-> Telegram에서 `# 태스크 설명` 형식으로 메시지를 보내면 칸반 카드가 생성됩니다. 에이전트가 자동 실행되고 완료 시 알림을 보냅니다.
+> Telegram에서 `# 버그 수정해줘` 이렇게 보내면 칸반 카드가 자동 생성되고 에이전트가 알아서 실행. 출퇴근길에 폰으로 태스크 던지면 집에 도착할 때쯤 완료되어 있습니다.
 
 ## 사전 요구 사항
 

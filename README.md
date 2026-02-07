@@ -118,6 +118,14 @@ pnpm dev:local  # localhost only (127.0.0.1)
 
 ---
 
+## Why?
+
+Using multiple AI coding agents (Claude Code, Codex CLI, Gemini CLI) means juggling multiple terminal windows, manually deciding which agent to use for each task, and waiting blindly until they finish. Claw-Kanban solves this by providing a single dashboard where you can:
+
+- **Auto-assign agents by role** — no more manual switching between terminals
+- **Watch agents work in real-time** — no more blind waiting; see exactly what your agent is doing
+- **Dispatch tasks from your phone** — send `# fix the login bug` via Telegram and the agent handles the rest
+
 ## Features
 
 - **6-Column Kanban Board** — Inbox, Planned, In Progress, Review/Test, Done, Stopped
@@ -125,8 +133,8 @@ pnpm dev:local  # localhost only (127.0.0.1)
 - **Role-Based Auto-Assignment** — Automatically route tasks by role (DevOps / Backend / Frontend) and task type (New / Modify / Bugfix)
 - **AI Provider Detection** — Settings panel shows install and auth status for each CLI tool; unauthenticated providers are disabled in dropdowns
 - **Automatic Review** — After implementation completes, auto-trigger a review/test cycle via Claude
-- **Real-time Terminal Viewer** — Stream-JSON log parser for Claude / Codex / Gemini output
-- **Webhook Ingestion** — `POST /api/inbox` to create cards from Telegram, Slack, or any source
+- **Real-time Terminal Viewer** — Live agent output in the browser; no more waiting blindly for completion
+- **Chat-to-Card** — Send `# task description` via Telegram, Slack, or any webhook source to instantly create a kanban card
 - **OpenClaw Gateway Integration** — Optional wake notifications on card status changes
 - **Modern Dark UI** — React 19, responsive, glassmorphism design
 - **SQLite Storage** — Zero-config, file-based database via Node.js built-in `node:sqlite`
@@ -156,7 +164,7 @@ pnpm dev:local  # localhost only (127.0.0.1)
   <img src="sample_img/claude_code_tm.png" width="800" alt="Terminal Viewer" />
 </p>
 
-> Live streaming output from running AI agents. Scroll to bottom, follow mode, and full log history.
+> See exactly what your AI agent is doing in real-time. No more waiting blindly for completion — open the terminal viewer and watch the agent work.
 
 ### Telegram Integration
 
@@ -164,7 +172,7 @@ pnpm dev:local  # localhost only (127.0.0.1)
   <img src="sample_img/telegram.png" width="400" alt="Telegram Integration" />
 </p>
 
-> Send `# task description` via Telegram to create a kanban card. The agent auto-runs and reports back when done.
+> Send `# fix the login bug` from Telegram and a kanban card is created automatically. The agent runs, completes the work, and reports back — dispatch tasks from your phone on the go.
 
 ## Prerequisites
 
