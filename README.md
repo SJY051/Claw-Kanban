@@ -243,6 +243,28 @@ pnpm dev:local
 7. Review fails                       ──>  Stays in "Review/Test", issues reported
 ```
 
+### Project Path
+
+The agent needs to know **which project directory** to work in. Include a `## Project Path` section in the card description:
+
+```
+Fix the login button style
+
+## Project Path
+/Users/me/projects/my-app
+```
+
+The server parses this and runs the AI agent in that directory (`cwd`). If omitted, it defaults to the Claw-Kanban server's working directory.
+
+For Telegram/webhook messages, include it in the text:
+
+```
+# Fix the login button style
+
+## Project Path
+/Users/me/projects/my-app
+```
+
 ### Task Flow Diagram
 
 ```
