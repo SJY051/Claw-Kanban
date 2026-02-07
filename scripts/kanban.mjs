@@ -148,11 +148,16 @@ function stop() {
   }
 
   try {
-    // Kill process group on Unix
-    if (process.platform !== "win32") {
+    if (process.platform === "win32") {
+      // Windows: use taskkill /T (tree) /F (force) for reliable cleanup
+      try {
+        execSync(`taskkill /pid ${pid} /T /F`, { stdio: "ignore", timeout: 5000 });
+      } catch { /* ignore - process may already be gone */ }
+    } else {
+      // Unix: kill process group first, then individual process
       try { process.kill(-pid, "SIGTERM"); } catch { /* ignore */ }
+      process.kill(pid, "SIGTERM");
     }
-    process.kill(pid, "SIGTERM");
   } catch (err) {
     console.error(`[Claw-Kanban] Failed to stop process ${pid}: ${err.message}`);
     return false;

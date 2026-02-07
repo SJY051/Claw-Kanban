@@ -36,6 +36,7 @@ export interface Card {
   priority: number;
   role?: Role;
   task_type?: TaskType;
+  project_path?: string | null;
 }
 
 export interface CardLog {
@@ -72,6 +73,7 @@ export async function createCard(input: {
   priority?: number;
   role?: Role;
   task_type?: TaskType;
+  project_path?: string;
 }): Promise<string> {
   const r = await fetch(`${base}/api/cards`, {
     method: "POST",
@@ -83,7 +85,7 @@ export async function createCard(input: {
   return j.id as string;
 }
 
-export async function patchCard(id: string, patch: Partial<Pick<Card, "title" | "description" | "status" | "priority" | "assignee" | "role" | "task_type">>): Promise<void> {
+export async function patchCard(id: string, patch: Partial<Pick<Card, "title" | "description" | "status" | "priority" | "assignee" | "role" | "task_type" | "project_path">>): Promise<void> {
   const r = await fetch(`${base}/api/cards/${id}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
@@ -120,7 +122,10 @@ export async function getTerminal(id: string, lines = 400, pretty = true): Promi
 
 export async function runCard(id: string): Promise<void> {
   const r = await fetch(`${base}/api/cards/${id}/run`, { method: "POST" });
-  if (!r.ok) throw new Error(`runCard failed: ${r.status}`);
+  if (!r.ok) {
+    const body = await r.json().catch(() => null);
+    throw new Error(body?.message ?? `runCard failed: ${r.status}`);
+  }
 }
 
 export async function stopCard(id: string): Promise<void> {
@@ -130,7 +135,10 @@ export async function stopCard(id: string): Promise<void> {
 
 export async function reviewCard(id: string): Promise<void> {
   const r = await fetch(`${base}/api/cards/${id}/review`, { method: "POST" });
-  if (!r.ok) throw new Error(`reviewCard failed: ${r.status}`);
+  if (!r.ok) {
+    const body = await r.json().catch(() => null);
+    throw new Error(body?.message ?? `reviewCard failed: ${r.status}`);
+  }
 }
 
 export const DEFAULT_PROVIDER_SETTINGS: ProviderSettings = {

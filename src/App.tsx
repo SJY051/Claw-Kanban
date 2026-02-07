@@ -61,6 +61,7 @@ export default function App() {
 
   const [newRole, setNewRole] = useState<Role | "">("");
   const [newTaskType, setNewTaskType] = useState<TaskType | "">("");
+  const [newProjectPath, setNewProjectPath] = useState("");
 
   async function refresh() {
     const cs = await listCards();
@@ -207,6 +208,12 @@ export default function App() {
           onChange={(e) => setNewDesc(e.target.value)}
           placeholder="Description / requirements (optional)"
         />
+        <input
+          value={newProjectPath}
+          onChange={(e) => setNewProjectPath(e.target.value)}
+          placeholder="Project path (e.g. /Users/me/my-project)"
+          style={{ fontFamily: "monospace" }}
+        />
         <select
           value={newRole}
           onChange={(e) => setNewRole(e.target.value as Role | "")}
@@ -242,11 +249,13 @@ export default function App() {
                 status: "Inbox",
                 role: newRole || undefined,
                 task_type: newTaskType || undefined,
+                project_path: newProjectPath.trim() || undefined,
               });
               setNewTitle("");
               setNewDesc("");
               setNewRole("");
               setNewTaskType("");
+              setNewProjectPath("");
               await refresh();
             } catch (e) {
               setErr(String((e as Error).message ?? e));
@@ -306,6 +315,7 @@ export default function App() {
               <div><b>Source</b> {selected.source} {selected.source_message_id ? `(msg ${selected.source_message_id})` : ""}</div>
               <div><b>Author</b> {selected.source_author ?? "-"}</div>
               <div><b>Chat</b> {selected.source_chat ?? "-"}</div>
+              {selected.project_path && <div><b>Working Dir</b> <code>{selected.project_path}</code></div>}
             </div>
             <div className="sideFieldGroup">
               <label>Role</label>
@@ -362,6 +372,15 @@ export default function App() {
                 ))}
               </select>
             </div>
+            <div className="sideFieldGroup">
+              <label>Project Path</label>
+              <input
+                value={selected.project_path ?? ""}
+                onChange={(e) => setSelected({ ...selected, project_path: e.target.value || null })}
+                placeholder="e.g. /Users/me/my-project"
+                style={{ fontFamily: "monospace", fontSize: "0.85em" }}
+              />
+            </div>
             <textarea
               value={selected.description}
               onChange={(e) => setSelected({ ...selected, description: e.target.value })}
@@ -371,10 +390,13 @@ export default function App() {
               <button
                 className="btn"
                 onClick={async () => {
-                  await patchCard(selected.id, { description: selected.description });
+                  await patchCard(selected.id, {
+                    description: selected.description,
+                    project_path: selected.project_path || null,
+                  });
                   await refresh();
                 }}
-              >Save Description</button>
+              >Save Details</button>
               <button
                 className="btn"
                 onClick={async () => {

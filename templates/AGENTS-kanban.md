@@ -7,6 +7,17 @@
 
 ---
 
+## Language Rule
+
+**Always match the user's language.** Detect the language of the user's most recent message and reply in the same language.
+- Korean message → reply in Korean
+- English message → reply in English
+- Other languages → reply in that language
+
+This applies to ALL orchestrator responses: confirmations, questions, error messages, status updates.
+
+---
+
 ## Core Principle: I am the Orchestrator
 
 **Requests starting with `#` are NOT executed directly.**
@@ -33,7 +44,14 @@ When receiving a message that **starts with `#`**:
      -H 'content-type: application/json' \
      -d '{"source":"telegram","text":"<message content>"}'
    ```
-3. Confirm to the user: "Added to kanban"
+3. Confirm to the user (in their language):
+   - KO: "kanban에 등록했어. (card id: <id>)"
+   - EN: "Added to kanban. (card id: <id>)"
+4. **Immediately ask the user for the project path** (in their language):
+   - KO: "이 작업을 어떤 프로젝트 경로에서 진행할까요?"
+   - EN: "Which project path should this task run in?"
+   - Once the user responds, PATCH the card: `{"project_path":"<user-provided-path>"}`
+   - If the user provides a path in the original `#` message (e.g. `# fix bug in /path/to/project`), extract and set it automatically without asking
 
 ## 2. Task Distribution (Inbox -> CLI Agent)
 
@@ -42,9 +60,11 @@ When a card appears in Inbox:
 1. Analyze card content -> select the appropriate CLI agent
    - **Coding tasks**: Claude Code, Codex, or sessions_spawn
    - **Design/creative**: Gemini CLI (exceptional cases)
-2. Move card to `In Progress`
-3. Assign to agent (background exec or sessions_spawn)
-4. **Always include a completion hook:**
+2. **Check `project_path`** — if empty, ask the user before proceeding (the API will reject `/run` without it)
+3. **Check for existing work** — if the card has prior terminal logs, ask the user whether to continue or start fresh
+4. Move card to `In Progress`
+5. Assign to agent (background exec or sessions_spawn)
+6. **Always include a completion hook:**
    ```bash
    openclaw gateway wake --text "Done [cardID]: <result summary>" --mode now
    ```
@@ -83,16 +103,68 @@ openclaw gateway wake --text "Done: <brief result summary>" --mode now
 
 This ensures the orchestrator is always informed when work finishes, regardless of whether the task originated from the kanban board.
 
+## Project Path Verification
+
+Cards have an optional `project_path` field that specifies where the agent should work.
+The API server **blocks** `/run` and `/review` when `project_path` is empty (returns `missing_project_path` error).
+
+### Rules
+
+1. **If `project_path` is set on the card:** use that path as the working directory
+2. **If `project_path` is empty:** check the card description for a `## Project Path` section
+3. **If neither is set:**
+   - **NEVER create a temporary directory or guess a path.** No `/tmp/kanban-temp/`, no `~/Desktop/`, no fabricated paths. This is strictly forbidden.
+   - **STOP and ask the user** (in their language, e.g. KO: "이 작업을 어떤 프로젝트 경로에서 진행할까요?" / EN: "Which project path should this task run in?") and WAIT for their response
+   - Only after the user provides an explicit path, PATCH the card with `project_path` then call `/run`
+   - If the user does not respond, leave the card in Inbox. Do NOT proceed without a confirmed path.
+
+### Existing session check
+
+Before starting a new agent run, check if the card already has previous runs:
+
+```bash
+curl http://127.0.0.1:8787/api/cards/<id>/terminal?lines=20
+```
+
+If the terminal log exists and contains prior work (non-empty output), ask the user (in their language):
+- KO: "이 카드에 이전 작업 내역이 있습니다. 이어서 진행할까요, 새로 시작할까요?"
+- EN: "This card has prior work. Continue where it left off, or start fresh?"
+- **Continue:** keep the existing log and description context, run the agent with additional instructions referencing prior work
+- **Restart:** clear context and run fresh
+
+### Fallback chain
+
+```
+card.project_path → description "## Project Path" section → ask user (MUST)
+```
+
+### Ingestion with project_path
+
+When creating cards via the API, always include `project_path` if known:
+
+```bash
+curl -X POST http://127.0.0.1:8787/api/inbox \
+  -H 'content-type: application/json' \
+  -d '{"source":"telegram","text":"fix the build","project_path":"/Users/me/my-project"}'
+```
+
+If the source message does not contain a project path, do NOT include `project_path` in the API call. The orchestrator will ask the user before running the agent.
+
 ## API Reference
 
 ```bash
 # List Inbox cards
 curl http://127.0.0.1:8787/api/cards?status=Inbox
 
-# Update card status
+# Create a card with project_path
+curl -X POST http://127.0.0.1:8787/api/cards \
+  -H 'content-type: application/json' \
+  -d '{"title":"fix bug","description":"...","project_path":"/Users/me/my-project"}'
+
+# Update card status and project_path
 curl -X PATCH http://127.0.0.1:8787/api/cards/<id> \
   -H 'content-type: application/json' \
-  -d '{"status":"In Progress"}'
+  -d '{"status":"In Progress","project_path":"/Users/me/my-project"}'
 
 # View terminal log
 curl http://127.0.0.1:8787/api/cards/<id>/terminal?lines=50

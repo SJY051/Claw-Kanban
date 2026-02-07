@@ -10,10 +10,19 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.1-blue" alt="Version" />
+  <img src="https://img.shields.io/badge/node-%3E%3D22-brightgreen" alt="Node.js 22+" />
+  <img src="https://img.shields.io/badge/license-Apache%202.0-orange" alt="License" />
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="Platform" />
+  <img src="https://img.shields.io/badge/AI-Claude%20%7C%20Codex%20%7C%20Gemini-purple" alt="AI Agents" />
+</p>
+
+<p align="center">
   <a href="#install-with-ai">Install with AI</a> &middot;
   <a href="#features">Features</a> &middot;
   <a href="#architecture">Architecture</a> &middot;
   <a href="#api-reference">API</a> &middot;
+  <a href="#changelog">Changelog</a> &middot;
   <a href="README.ko.md">한국어</a>
 </p>
 
@@ -136,9 +145,11 @@ Using multiple AI coding agents (Claude Code, Codex CLI, Gemini CLI) means juggl
 - **Real-time Terminal Viewer** — Live agent output in the browser; no more waiting blindly for completion
 - **Chat-to-Card** — Send `# task description` via Telegram, Slack, or any webhook source to instantly create a kanban card
 - **OpenClaw Gateway Integration** — Optional wake notifications on card status changes
+- **Project Path Safety** — Dedicated `project_path` field per card; server blocks agent runs when path is unset to prevent working in the wrong directory
+- **Multi-Language Orchestration** — AGENTS.md rules auto-detect user language (Korean, English, etc.) and respond accordingly
 - **Modern Dark UI** — React 19, responsive, glassmorphism design
 - **SQLite Storage** — Zero-config, file-based database via Node.js built-in `node:sqlite`
-- **Cross-Platform** — macOS, Linux, and Windows
+- **Cross-Platform** — macOS, Linux, and Windows (PowerShell)
 
 ## Screenshots
 
@@ -245,7 +256,25 @@ pnpm dev:local
 
 ### Project Path
 
-The agent needs to know **which project directory** to work in. Include a `## Project Path` section in the card description:
+The agent needs to know **which project directory** to work in. There are three ways to set it:
+
+**1. Dedicated `project_path` field (recommended):**
+
+Set it in the UI card detail panel, or via API:
+
+```bash
+# When creating a card
+curl -X POST http://127.0.0.1:8787/api/cards \
+  -H 'content-type: application/json' \
+  -d '{"title":"fix bug","description":"...","project_path":"/Users/me/projects/my-app"}'
+
+# When updating an existing card
+curl -X PATCH http://127.0.0.1:8787/api/cards/<id> \
+  -H 'content-type: application/json' \
+  -d '{"project_path":"/Users/me/projects/my-app"}'
+```
+
+**2. Description section (legacy, still supported):**
 
 ```
 Fix the login button style
@@ -254,16 +283,17 @@ Fix the login button style
 /Users/me/projects/my-app
 ```
 
-The server parses this and runs the AI agent in that directory (`cwd`). If omitted, it defaults to the Claw-Kanban server's working directory.
+**3. Webhook with project_path:**
 
-For Telegram/webhook messages, include it in the text:
-
+```bash
+curl -X POST http://127.0.0.1:8787/api/inbox \
+  -H 'content-type: application/json' \
+  -d '{"text":"fix the build","source":"telegram","project_path":"/Users/me/projects/my-app"}'
 ```
-# Fix the login button style
 
-## Project Path
-/Users/me/projects/my-app
-```
+**Fallback chain:** `card.project_path` field > description `## Project Path` section > blocked (server returns error)
+
+> **Note:** The server blocks `/run` and `/review` if no project path can be resolved. This prevents agents from running in the wrong directory.
 
 ### Task Flow Diagram
 
@@ -431,8 +461,10 @@ Claw-Kanban/
 POST /api/inbox
 Content-Type: application/json
 
-{ "text": "# Fix the login bug", "source": "telegram", "author": "user123" }
+{ "text": "# Fix the login bug", "source": "telegram", "author": "user123", "project_path": "/path/to/project" }
 ```
+
+> `project_path` is optional in webhook payloads. If omitted, the orchestrator will ask the user before running the agent.
 
 ### Health
 
@@ -468,7 +500,7 @@ Claw-Kanban is a **local development tool**. Important notes:
 |----------|--------|-------|
 | macOS | Fully tested | Primary dev platform. 100% working. launchd auto-start. |
 | Linux | Fully supported | systemd user service auto-start. |
-| Windows | In progress | PowerShell installer available. Full compatibility coming soon. |
+| Windows | Supported | PowerShell installer available. Process management uses `taskkill` for reliable cleanup. |
 
 ## Management
 
@@ -488,6 +520,22 @@ systemctl --user restart claw-kanban
 systemctl --user stop claw-kanban
 systemctl --user status claw-kanban
 ```
+
+## Changelog
+
+### v1.0.1
+
+- **`project_path` first-class field** — Cards now have a dedicated `project_path` column. Set it via UI, API (`POST /api/cards`, `PATCH /api/cards/:id`, `POST /api/inbox`), or AGENTS.md orchestration
+- **Run/review guard** — Server blocks `/run` and `/review` when `project_path` is unset, preventing agents from running in the wrong directory
+- **3-step fallback chain** — `card.project_path` > description `## Project Path` section > ask user (blocked)
+- **AGENTS.md orchestration updates** — Orchestrator asks user for project path on card creation; checks for existing work before re-running; language-adaptive responses (Korean/English/auto-detect)
+- **Windows process management fix** — `killPidTree` now uses `execFile("taskkill")` with timeout; `kanban.mjs stop` uses `execSync("taskkill /T /F")` for reliable process tree cleanup
+- **UI improvements** — Project path input in card creation form and detail panel; "Save Description" renamed to "Save Details"; Working Dir shown in card metadata
+- **SQLite parameter binding fix** — Explicit `null` conversion for all optional fields prevents `undefined` binding errors on `node:sqlite`
+
+### v1.0.0
+
+- Initial release
 
 ## License
 

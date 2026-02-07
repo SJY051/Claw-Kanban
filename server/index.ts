@@ -192,6 +192,9 @@ CREATE INDEX IF NOT EXISTS idx_card_runs_card ON card_runs(card_id, created_at D
 CREATE INDEX IF NOT EXISTS idx_card_logs_card ON card_logs(card_id, created_at DESC);
 `);
 
+// Migration: add project_path column (safe to re-run; silently ignored if column exists)
+try { db.exec(`ALTER TABLE cards ADD COLUMN project_path TEXT`); } catch { /* column already exists */ }
+
 // --- OpenClaw Gateway integration (optional) ---
 // Set OPENCLAW_CONFIG to your openclaw.json path to enable gateway wake notifications.
 // Example: OPENCLAW_CONFIG=~/.openclaw/openclaw.json
@@ -469,6 +472,12 @@ function extractProjectPath(description: string): string | null {
   return null;
 }
 
+// 3-step fallback: card.project_path field → extractProjectPath(description) → cwd
+function resolveProjectPath(card: { project_path?: string | null; description: string }): string {
+  if (card.project_path) return card.project_path;
+  return extractProjectPath(card.description) || process.cwd();
+}
+
 function appendSystemLog(kind: string, message: string) {
   const t = nowMs();
   db.prepare("INSERT INTO system_logs (created_at, kind, message) VALUES (?, ?, ?)").run(t, kind, message);
@@ -491,6 +500,7 @@ const createCardSchema = z.object({
   priority: z.number().int().min(0).max(5).default(0),
   role: Role,
   task_type: TaskType,
+  project_path: z.string().optional(),
 });
 
 const buildHealthPayload = () => ({
@@ -761,14 +771,24 @@ app.post("/api/cards", (req, res) => {
   }
 
   db.prepare(
-    `INSERT INTO cards (id, created_at, updated_at, source, source_message_id, source_author, source_chat, title, description, status, assignee, priority, role, task_type)
-     VALUES (@id, @created_at, @updated_at, @source, @source_message_id, @source_author, @source_chat, @title, @description, @status, @assignee, @priority, @role, @task_type)`
+    `INSERT INTO cards (id, created_at, updated_at, source, source_message_id, source_author, source_chat, title, description, status, assignee, priority, role, task_type, project_path)
+     VALUES (@id, @created_at, @updated_at, @source, @source_message_id, @source_author, @source_chat, @title, @description, @status, @assignee, @priority, @role, @task_type, @project_path)`
   ).run({
     id,
     created_at: t,
     updated_at: t,
-    ...input,
-    assignee,
+    source: input.source,
+    source_message_id: input.source_message_id ?? null,
+    source_author: input.source_author ?? null,
+    source_chat: input.source_chat ?? null,
+    title: input.title,
+    description: input.description,
+    status: input.status,
+    assignee: assignee ?? null,
+    priority: input.priority,
+    role: input.role ?? null,
+    task_type: input.task_type ?? null,
+    project_path: input.project_path ?? null,
   });
 
   db.prepare(
@@ -801,6 +821,7 @@ app.patch("/api/cards/:id", (req, res) => {
       priority: z.number().int().min(0).max(5).optional(),
       role: Role,
       task_type: TaskType,
+      project_path: z.string().nullable().optional(),
     })
     .strict();
 
@@ -825,7 +846,7 @@ app.patch("/api/cards/:id", (req, res) => {
 
   db.prepare(
     `UPDATE cards
-     SET updated_at=@updated_at, title=@title, description=@description, status=@status, assignee=@assignee, priority=@priority, role=@role, task_type=@task_type
+     SET updated_at=@updated_at, title=@title, description=@description, status=@status, assignee=@assignee, priority=@priority, role=@role, task_type=@task_type, project_path=@project_path
      WHERE id=@id`
   ).run({
     id: next.id,
@@ -837,6 +858,7 @@ app.patch("/api/cards/:id", (req, res) => {
     priority: next.priority,
     role: next.role,
     task_type: next.task_type,
+    project_path: next.project_path ?? null,
   });
 
   db.prepare(
@@ -1111,7 +1133,15 @@ app.post("/api/cards/:id/run", (req, res) => {
     return res.status(400).json({ error: "unsupported_agent", agent });
   }
 
-  const projectPath = extractProjectPath(card.description) || process.cwd();
+  const projectPath = resolveProjectPath(card);
+
+  // Block run if no project_path is resolved (falls back to cwd which is ambiguous)
+  if (!card.project_path && !extractProjectPath(card.description)) {
+    return res.status(400).json({
+      error: "missing_project_path",
+      message: "project_path is not set. Please set a project path before running the agent.",
+    });
+  }
   const logPath = path.join(logsDir, `${id}.log`);
 
   const prompt = `${card.title}
@@ -1205,7 +1235,15 @@ app.post("/api/cards/:id/review", (req, res) => {
     return res.status(400).json({ error: "card_not_in_review_test", status: card.status });
   }
 
-  const projectPath = extractProjectPath(card.description) || process.cwd();
+  // Block review if no project_path is resolved
+  if (!card.project_path && !extractProjectPath(card.description)) {
+    return res.status(400).json({
+      error: "missing_project_path",
+      message: "project_path is not set. Please set a project path before running review.",
+    });
+  }
+
+  const projectPath = resolveProjectPath(card);
   startReviewTest(id, projectPath);
 
   res.json({ ok: true, message: "Review started" });
@@ -1213,9 +1251,9 @@ app.post("/api/cards/:id/review", (req, res) => {
 
 function killPidTree(pid: number) {
   if (process.platform === "win32") {
-    // Windows: use taskkill with /T (tree) and /F (force)
+    // Windows: use taskkill /T (tree) /F (force) synchronously
     try {
-      spawn("taskkill", ["/pid", String(pid), "/T", "/F"], { stdio: "ignore" });
+      execFile("taskkill", ["/pid", String(pid), "/T", "/F"], { timeout: 5000 }, () => {});
     } catch {
       // ignore
     }
@@ -1301,7 +1339,8 @@ app.post("/api/inbox", (req, res) => {
     message_id: z.string().optional(),
     author: z.string().optional(),
     chat: z.string().optional(),
-    text: z.string().min(1)
+    text: z.string().min(1),
+    project_path: z.string().optional(),
   });
   const m = schema.parse(req.body ?? {});
 
@@ -1314,8 +1353,8 @@ app.post("/api/inbox", (req, res) => {
   const id = uuid();
   const t = nowMs();
   db.prepare(
-    `INSERT INTO cards (id, created_at, updated_at, source, source_message_id, source_author, source_chat, title, description, status, assignee, priority)
-     VALUES (@id, @created_at, @updated_at, @source, @source_message_id, @source_author, @source_chat, @title, @description, @status, @assignee, @priority)`
+    `INSERT INTO cards (id, created_at, updated_at, source, source_message_id, source_author, source_chat, title, description, status, assignee, priority, project_path)
+     VALUES (@id, @created_at, @updated_at, @source, @source_message_id, @source_author, @source_chat, @title, @description, @status, @assignee, @priority, @project_path)`
   ).run({
     id,
     created_at: t,
@@ -1328,7 +1367,8 @@ app.post("/api/inbox", (req, res) => {
     description,
     status: "Inbox",
     assignee: null,
-    priority: 0
+    priority: 0,
+    project_path: m.project_path ?? null,
   });
   db.prepare(
     "INSERT INTO card_logs (card_id, created_at, kind, message) VALUES (?, ?, ?, ?)"
