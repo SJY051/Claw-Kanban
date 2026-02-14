@@ -156,9 +156,8 @@ function buildAgentArgs(agent: string): string[] {
       return ["opencode", "run", "--format", "json", "--model", model];
     }
     case "antigravity": {
-      const model = modelConfig.antigravity?.model || "google-antigravity/gemini-2.5-pro";
-      // antigravity models go through openclaw
-      return ["openclaw", "agent", "--message-stdin", "--model", model, "--output-format", "stream-json"];
+      const model = modelConfig.antigravity?.model || "github-copilot/gemini-2.5-pro";
+      return ["opencode", "run", "--format", "json", "--model", model];
     }
     default:
       throw new Error(`unsupported agent: ${agent}`);
@@ -1725,12 +1724,11 @@ async function fetchOpenClawModels(): Promise<Record<string, string[]>> {
       }
     }
   } catch {
-    // openclaw not available or failed; add well-known antigravity models
+    // openclaw not available; use copilot-routed gemini models as fallback
     grouped.antigravity = [
-      "google-antigravity/gemini-2.5-pro",
-      "google-antigravity/gemini-2.5-flash",
-      "google-antigravity/claude-sonnet-4-5",
-      "google-antigravity/claude-opus-4-5",
+      "github-copilot/gemini-2.5-pro",
+      "github-copilot/gemini-3-flash-preview",
+      "github-copilot/gemini-3-pro-preview",
     ];
   }
   return grouped;
