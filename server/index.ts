@@ -123,19 +123,20 @@ const activeProcesses = new Map<string, ChildProcess>();
 
 // Returns [command, ...args] without the prompt.
 // Prompt is delivered via stdin piping to avoid shell escaping issues on Windows.
-// OAuth provider config stored in settings
-interface OAuthProviderConfig {
+// Model config stored in settings per provider
+interface ProviderModelConfig {
   model: string;
-  via: "opencode" | "openclaw";
 }
-type OAuthProviderConfigMap = Record<string, OAuthProviderConfig>;
+type ProviderModelConfigMap = Record<string, ProviderModelConfig>;
 
-function getOAuthProviderConfig(): OAuthProviderConfigMap {
+function getProviderModelConfig(): ProviderModelConfigMap {
   const settings = getProviderSettings();
-  return settings.oauthProviderConfig ?? {};
+  return settings.providerModelConfig ?? {};
 }
 
 function buildAgentArgs(agent: string): string[] {
+  const modelConfig = getProviderModelConfig();
+
   switch (agent) {
     case "codex":
       return ["codex", "--yolo", "exec", "--json"];
@@ -144,17 +145,19 @@ function buildAgentArgs(agent: string): string[] {
               "--output-format=stream-json", "--include-partial-messages"];
     case "gemini":
       return ["gemini", "--yolo", "--output-format=stream-json"];
-    case "opencode":
-      return ["opencode", "run", "--format", "json"];
-    case "copilot":
+    case "opencode": {
+      const model = modelConfig.opencode?.model;
+      const args = ["opencode", "run", "--format", "json"];
+      if (model) args.push("--model", model);
+      return args;
+    }
+    case "copilot": {
+      const model = modelConfig.copilot?.model || "github-copilot/claude-sonnet-4.5";
+      return ["opencode", "run", "--format", "json", "--model", model];
+    }
     case "antigravity": {
-      const config = getOAuthProviderConfig()[agent];
-      const model = config?.model || (agent === "copilot" ? "github-copilot/claude-sonnet-4.5" : "gemini-2.5-pro");
-      const via = config?.via || "opencode";
-      if (via === "opencode") {
-        return ["opencode", "run", "--format", "json", "--model", model];
-      }
-      // openclaw route
+      const model = modelConfig.antigravity?.model || "google-antigravity/gemini-2.5-pro";
+      // antigravity models go through openclaw
       return ["openclaw", "agent", "--message-stdin", "--model", model, "--output-format", "stream-json"];
     }
     default:
@@ -498,7 +501,7 @@ const DEFAULT_PROVIDER_SETTINGS = {
     reviewTest: null,
   },
   autoAssign: true,
-  oauthProviderConfig: {} as OAuthProviderConfigMap,
+  providerModelConfig: {} as ProviderModelConfigMap,
 };
 
 // Initialize default settings if not exists
@@ -631,9 +634,8 @@ app.get("/api/settings", (_req, res) => {
 });
 
 app.put("/api/settings", (req, res) => {
-  const OAuthProviderConfigSchema = z.object({
+  const ProviderModelConfigSchema = z.object({
     model: z.string(),
-    via: z.enum(["opencode", "openclaw"]),
   });
   const settingsSchema = z.object({
     roleProviders: z.object({
@@ -650,7 +652,7 @@ app.put("/api/settings", (req, res) => {
       reviewTest: Provider.nullable(),
     }),
     autoAssign: z.boolean(),
-    oauthProviderConfig: z.record(z.string(), OAuthProviderConfigSchema).optional(),
+    providerModelConfig: z.record(z.string(), ProviderModelConfigSchema).optional(),
   });
 
   const settings = settingsSchema.parse(req.body);

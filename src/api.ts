@@ -4,12 +4,11 @@ export type Role = "devops" | "backend" | "frontend";
 export type Provider = "claude" | "codex" | "gemini" | "opencode" | "copilot" | "antigravity";
 export type TaskType = "new" | "modify" | "bugfix";
 
-export interface OAuthProviderConfig {
+export interface ProviderModelConfig {
   model: string;
-  via: "opencode" | "openclaw";
 }
 
-export type OAuthProviderConfigMap = Record<string, OAuthProviderConfig>;
+export type ProviderModelConfigMap = Record<string, ProviderModelConfig>;
 
 export interface ProviderSettings {
   roleProviders: {
@@ -26,7 +25,7 @@ export interface ProviderSettings {
     reviewTest: Provider | null;
   };
   autoAssign: boolean;
-  oauthProviderConfig?: OAuthProviderConfigMap;
+  providerModelConfig?: ProviderModelConfigMap;
 }
 
 export interface Card {
@@ -188,7 +187,7 @@ export const DEFAULT_PROVIDER_SETTINGS: ProviderSettings = {
     reviewTest: null,
   },
   autoAssign: true,
-  oauthProviderConfig: {},
+  providerModelConfig: {},
 };
 
 export type OAuthModelMap = Record<string, string[]>;

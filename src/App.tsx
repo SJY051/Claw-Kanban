@@ -14,6 +14,7 @@ import type {
   ImportResult,
   DeviceCodeStart,
   OAuthModelMap,
+  ProviderModelConfig,
 } from "./api";
 import {
   createCard,
@@ -940,51 +941,50 @@ export default function App() {
                 )}
               </div>
 
-              {OAUTH_ASSIGNABLE.some((o) => oauthStatus?.[o.oauthKey]?.connected) && (
-                <div className="settingsSection">
-                  <div className="settingsSectionTitle">OAuth Provider Models</div>
-                  <div className="settingsHint" style={{ marginBottom: 12 }}>
-                    Configure which model and CLI to use when an OAuth provider is assigned to a task.
+              {(() => {
+                // Show model config for providers that support model selection
+                const modelProviders = PROVIDERS.filter((p) => {
+                  if (p.value === "opencode") return cliStatus?.opencode?.installed ?? false;
+                  const oEntry = OAUTH_ASSIGNABLE.find((o) => o.value === p.value);
+                  if (oEntry) return oauthStatus?.[oEntry.oauthKey]?.connected ?? false;
+                  return false;
+                });
+                if (modelProviders.length === 0) return null;
+                return (
+                  <div className="settingsSection">
+                    <div className="settingsSectionTitle">Model Selection</div>
+                    <div className="settingsHint" style={{ marginBottom: 12 }}>
+                      Choose which model each provider uses when running tasks.
+                    </div>
+                    <div className="settingsGrid">
+                      {modelProviders.map((p) => {
+                        const cfg: ProviderModelConfig = settings.providerModelConfig?.[p.value] ?? { model: "" };
+                        const models = oauthModels[p.value] ?? [];
+                        return (
+                          <div key={p.value} className="settingsField">
+                            <label>{p.label}</label>
+                            <select
+                              value={cfg.model}
+                              onChange={(e) => {
+                                const next = { ...settings.providerModelConfig, [p.value]: { model: e.target.value } };
+                                setSettings({ ...settings, providerModelConfig: next });
+                              }}
+                            >
+                              <option value="">{p.value === "opencode" ? "Default model" : "Select model..."}</option>
+                              {models.map((m) => (
+                                <option key={m} value={m}>{m}</option>
+                              ))}
+                            </select>
+                            <span className="settingsHint">
+                              {cfg.model || (p.value === "opencode" ? "Uses opencode default" : "No model selected")}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="settingsGrid">
-                    {OAUTH_ASSIGNABLE.filter((o) => oauthStatus?.[o.oauthKey]?.connected).map((o) => {
-                      const cfg = settings.oauthProviderConfig?.[o.value] ?? { model: "", via: "opencode" as const };
-                      const models = oauthModels[o.value] ?? [];
-                      return (
-                        <div key={o.value} className="settingsField">
-                          <label>{o.label}</label>
-                          <select
-                            value={cfg.model}
-                            onChange={(e) => {
-                              const next = { ...settings.oauthProviderConfig, [o.value]: { ...cfg, model: e.target.value } };
-                              setSettings({ ...settings, oauthProviderConfig: next });
-                            }}
-                          >
-                            <option value="">Select model...</option>
-                            {models.map((m) => (
-                              <option key={m} value={m}>{m}</option>
-                            ))}
-                          </select>
-                          <select
-                            value={cfg.via}
-                            onChange={(e) => {
-                              const next = { ...settings.oauthProviderConfig, [o.value]: { ...cfg, via: e.target.value as "opencode" | "openclaw" } };
-                              setSettings({ ...settings, oauthProviderConfig: next });
-                            }}
-                            style={{ marginTop: 4 }}
-                          >
-                            <option value="opencode">via OpenCode</option>
-                            <option value="openclaw">via OpenClaw</option>
-                          </select>
-                          <span className="settingsHint">
-                            {cfg.model ? `Run: ${cfg.via} → ${cfg.model}` : "No model selected"}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               <div className="settingsSection">
                 <div className="settingsSectionTitle">Auto-assign</div>
