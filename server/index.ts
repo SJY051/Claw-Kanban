@@ -1686,18 +1686,22 @@ async function fetchOpenCodeModels(): Promise<Record<string, string[]>> {
   const grouped: Record<string, string[]> = {};
   try {
     const output = await execWithTimeout("opencode", ["models"], 10_000);
+    const allOpenCodeModels: string[] = [];
     for (const line of output.split(/\r?\n/)) {
       const trimmed = line.trim();
       if (!trimmed || !trimmed.includes("/")) continue;
+      allOpenCodeModels.push(trimmed);
       const slashIdx = trimmed.indexOf("/");
       const provider = trimmed.slice(0, slashIdx);
-      const model = trimmed.slice(slashIdx + 1);
-      // Only include OAuth-relevant providers
-      if (provider === "github-copilot" || provider === "openai" || provider === "opencode") {
-        const key = provider === "github-copilot" ? "copilot" : provider;
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(trimmed);
+      // Also group by OAuth provider for their dedicated dropdowns
+      if (provider === "github-copilot") {
+        if (!grouped.copilot) grouped.copilot = [];
+        grouped.copilot.push(trimmed);
       }
+    }
+    // opencode gets ALL its authenticated models
+    if (allOpenCodeModels.length > 0) {
+      grouped.opencode = allOpenCodeModels;
     }
   } catch {
     // opencode not available or failed
