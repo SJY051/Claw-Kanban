@@ -1,6 +1,6 @@
 export type CardStatus = "Inbox" | "Planned" | "In Progress" | "Review/Test" | "Done" | "Stopped";
 export type Assignee = "claude" | "codex" | "gemini" | "opencode" | "copilot" | "antigravity" | null;
-export type Role = "devops" | "backend" | "frontend";
+export type Role = string;
 export type Provider = "claude" | "codex" | "gemini" | "opencode" | "copilot" | "antigravity";
 export type TaskType = "new" | "modify" | "bugfix";
 
@@ -41,8 +41,8 @@ export interface Card {
   status: CardStatus;
   assignee?: Assignee;
   priority: number;
-  role?: Role;
-  task_type?: TaskType;
+  role?: Role | null;
+  task_type?: TaskType | null;
   project_path?: string | null;
 }
 
@@ -186,7 +186,7 @@ export const DEFAULT_PROVIDER_SETTINGS: ProviderSettings = {
     inProgress: null,
     reviewTest: null,
   },
-  autoAssign: true,
+  autoAssign: false,
   providerModelConfig: {},
 };
 

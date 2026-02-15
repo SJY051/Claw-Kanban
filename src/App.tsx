@@ -42,10 +42,14 @@ import {
 } from "./api";
 
 const STATUSES: CardStatus[] = ["Inbox", "Planned", "In Progress", "Review/Test", "Done", "Stopped"];
-const ROLES: { value: Role; label: string }[] = [
+const ROLE_PRESETS: { value: Role; label: string }[] = [
   { value: "devops", label: "Dev Ops" },
   { value: "backend", label: "BackEnd" },
   { value: "frontend", label: "FrontEnd" },
+  { value: "planning", label: "Planning" },
+  { value: "research", label: "Research" },
+  { value: "content", label: "Content" },
+  { value: "ops", label: "Ops" },
 ];
 const TASK_TYPES: { value: TaskType; label: string }[] = [
   { value: "new", label: "New" },
@@ -71,6 +75,12 @@ const OAUTH_PROVIDERS: { value: OAuthConnectProvider; label: string; desc: strin
 function fmtTime(ms: number) {
   const d = new Date(ms);
   return d.toLocaleString();
+}
+
+function roleLabel(role?: string | null) {
+  if (!role) return "";
+  const preset = ROLE_PRESETS.find((r) => r.value === role);
+  return preset?.label ?? role;
 }
 
 function groupByStatus(cards: Card[]) {
@@ -122,7 +132,7 @@ export default function App() {
 
   const [oauthModels, setOauthModels] = useState<OAuthModelMap>({});
 
-  const [newRole, setNewRole] = useState<Role | "">("");
+  const [newRole, setNewRole] = useState("");
   const [newTaskType, setNewTaskType] = useState<TaskType | "">("");
   const [newProjectPath, setNewProjectPath] = useState("");
 
@@ -431,17 +441,19 @@ export default function App() {
           placeholder="Project path (e.g. /Users/me/my-project)"
           style={{ fontFamily: "monospace" }}
         />
-        <select
+        <input
+          list="role-presets"
           value={newRole}
-          onChange={(e) => setNewRole(e.target.value as Role | "")}
+          onChange={(e) => setNewRole(e.target.value)}
+          placeholder="Role (optional, e.g. planning)"
           className="newcard-select"
-        >
-          <option value="">Select Role</option>
-          {ROLES.map((r) => (
+        />
+        <datalist id="role-presets">
+          {ROLE_PRESETS.map((r) => (
             <option key={r.value} value={r.value}>{r.label}</option>
           ))}
-        </select>
-        {newRole === "frontend" && (
+        </datalist>
+        {newRole.trim().toLowerCase() === "frontend" && (
           <select
             value={newTaskType}
             onChange={(e) => setNewTaskType(e.target.value as TaskType | "")}
@@ -459,13 +471,15 @@ export default function App() {
           onClick={async () => {
             const title = newTitle.trim();
             if (!title) return;
+            const normalizedRole = newRole.trim();
+            const isFrontendRole = normalizedRole.toLowerCase() === "frontend";
             try {
               await createCard({
                 title,
                 description: newDesc,
                 status: "Inbox",
-                role: newRole || undefined,
-                task_type: newTaskType || undefined,
+                role: normalizedRole || undefined,
+                task_type: isFrontendRole ? (newTaskType || undefined) : undefined,
                 project_path: newProjectPath.trim() || undefined,
               });
               setNewTitle("");
@@ -495,7 +509,7 @@ export default function App() {
                   <div className="cardTitle">{c.title}</div>
                   <div className="cardMeta">
                     <span>{c.assignee ?? "unassigned"}</span>
-                    {c.role && <span className="cardRole">{ROLES.find(r => r.value === c.role)?.label}</span>}
+                    {c.role && <span className="cardRole">{roleLabel(c.role)}</span>}
                     <span>·</span>
                     <span>{fmtTime(c.updated_at)}</span>
                   </div>
@@ -536,30 +550,27 @@ export default function App() {
             </div>
             <div className="sideFieldGroup">
               <label>Role</label>
-              <select
+              <input
+                list="role-presets"
                 value={selected.role || ""}
                 onChange={async (e) => {
-                  const role = e.target.value as Role | "";
-                  setSelected({ ...selected, role: role || undefined });
-                  await patchCard(selected.id, { role: role || undefined });
+                  const role = e.target.value.trim();
+                  setSelected({ ...selected, role: role || null });
+                  await patchCard(selected.id, { role: role || null });
                   await refresh();
                 }}
-              >
-                <option value="">None</option>
-                {ROLES.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </select>
+                placeholder="Role (optional)"
+              />
             </div>
-            {selected.role === "frontend" && (
+            {(selected.role || "").trim().toLowerCase() === "frontend" && (
               <div className="sideFieldGroup">
                 <label>Task Type</label>
                 <select
                   value={selected.task_type || ""}
                   onChange={async (e) => {
                     const taskType = e.target.value as TaskType | "";
-                    setSelected({ ...selected, task_type: taskType || undefined });
-                    await patchCard(selected.id, { task_type: taskType || undefined });
+                    setSelected({ ...selected, task_type: taskType || null });
+                    await patchCard(selected.id, { task_type: taskType || null });
                     await refresh();
                   }}
                 >

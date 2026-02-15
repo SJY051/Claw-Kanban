@@ -136,15 +136,22 @@ function getProviderModelConfig(): ProviderModelConfigMap {
 
 function buildAgentArgs(agent: string): string[] {
   const modelConfig = getProviderModelConfig();
+  const allowUnsafeFlags = process.env.KANBAN_UNSAFE_AGENT_FLAGS === "1";
 
   switch (agent) {
     case "codex":
-      return ["codex", "--yolo", "exec", "--json"];
-    case "claude":
-      return ["claude", "--dangerously-skip-permissions", "--print", "--verbose",
-              "--output-format=stream-json", "--include-partial-messages"];
+      return allowUnsafeFlags
+        ? ["codex", "--yolo", "exec", "--json"]
+        : ["codex", "exec", "--json"];
+    case "claude": {
+      const args = ["claude", "--print", "--verbose", "--output-format=stream-json", "--include-partial-messages"];
+      if (allowUnsafeFlags) args.splice(1, 0, "--dangerously-skip-permissions");
+      return args;
+    }
     case "gemini":
-      return ["gemini", "--yolo", "--output-format=stream-json"];
+      return allowUnsafeFlags
+        ? ["gemini", "--yolo", "--output-format=stream-json"]
+        : ["gemini", "--output-format=stream-json"];
     case "opencode": {
       const model = modelConfig.opencode?.model;
       const args = ["opencode", "run", "--format", "json"];
@@ -765,7 +772,7 @@ function queueWake(params: { key: string; text: string; debounceMs?: number }) {
 
 const CardStatus = z.enum(["Inbox", "Planned", "In Progress", "Review/Test", "Done", "Stopped"]);
 const Assignee = z.enum(["claude", "codex", "gemini", "opencode", "copilot", "antigravity"]).optional();
-const Role = z.enum(["devops", "backend", "frontend"]).optional();
+const Role = z.string().trim().min(1).max(64).optional();
 const TaskType = z.enum(["new", "modify", "bugfix"]).optional();
 const Provider = z.enum(["claude", "codex", "gemini", "opencode", "copilot", "antigravity"]);
 
@@ -784,7 +791,7 @@ const DEFAULT_PROVIDER_SETTINGS = {
     inProgress: null,
     reviewTest: null,
   },
-  autoAssign: true,
+  autoAssign: false,
   providerModelConfig: {} as ProviderModelConfigMap,
 };
 
@@ -2288,8 +2295,8 @@ app.patch("/api/cards/:id", (req, res) => {
       status: CardStatus.optional(),
       assignee: Assignee,
       priority: z.number().int().min(0).max(5).optional(),
-      role: Role,
-      task_type: TaskType,
+      role: z.string().trim().min(1).max(64).nullable().optional(),
+      task_type: TaskType.nullable(),
       project_path: z.string().nullable().optional(),
     })
     .strict();
